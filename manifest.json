@@ -1,0 +1,22 @@
+{
+  "name": "KitchenLog - SM Catering",
+  "short_name": "KitchenLog",
+  "description": "Sistem Input Produksi Dapur Sari Murni Catering",
+  "start_url": "/kitchenlog/",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#0a1172",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo-sm.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo-sm.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

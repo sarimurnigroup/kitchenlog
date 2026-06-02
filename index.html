@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a1172">
 <title>KitchenLog — SM Catering</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -84,6 +86,11 @@ select,input[type=date],input[type=month]{width:100%;font-size:15px;padding:10px
 .loading-row{text-align:center;padding:1.5rem;color:#aaa;font-size:13px}
 </style>
 </head>
+<script>
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/kitchenlog/sw.js');
+}
+</script>
 <body>
 <div class="app">
   <div class="header">
