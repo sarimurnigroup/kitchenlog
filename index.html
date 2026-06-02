@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KitchenLog — SM Catering</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f0f2f5;min-height:100vh;position:relative;overflow-x:hidden}
+body::before{content:'';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:520px;height:520px;background:url('logo-sm.png') center/contain no-repeat;opacity:0.04;pointer-events:none;z-index:0}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.app{max-width:480px;margin:0 auto;padding:1rem;position:relative;z-index:1}
+@media(min-width:768px){.app{max-width:680px;padding:2rem}}
+.header{background:linear-gradient(135deg,#0a1172 0%,#1a2aad 60%,#0d47a1 100%);border-radius:20px;padding:1.4rem 1.5rem;margin-bottom:1.5rem;position:relative;overflow:hidden;animation:fadeSlide 0.4s ease both}
+.header::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none}
+.dot-grid{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,0.07) 1px,transparent 1px);background-size:20px 20px;pointer-events:none}
+.header-inner{position:relative;z-index:1}
+.header h1{font-size:26px;font-weight:800;color:#fff;letter-spacing:-0.5px}
+.header p{font-size:12px;color:rgba(255,255,255,0.55);margin-top:4px;letter-spacing:0.3px}
+.screen{display:none}.screen.active{display:block;animation:fadeSlide 0.3s ease both}
+.card{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:11px;font-weight:700;color:#aaa;margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.8px}
+.role-btn{width:100%;padding:14px;border:1px solid #e8e8e8;border-radius:12px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;margin-bottom:10px;transition:all 0.15s}
+.role-btn:last-child{margin-bottom:0}
+.role-btn:hover{background:#f0f4ff;border-color:#c0ccff}
+.role-icon{width:42px;height:42px;border-radius:10px;background:#e8eeff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.role-name{font-size:15px;font-weight:600;color:#111}
+.role-desc{font-size:12px;color:#888;margin-top:2px}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin:1.5rem 0}
+.dot{width:18px;height:18px;border-radius:50%;border:2px solid #ccc;transition:all 0.15s}
+.dot.filled{background:#0a1172;border-color:#0a1172}
+.pin-error{text-align:center;font-size:13px;color:#c0392b;min-height:20px;margin-bottom:10px}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:260px;margin:0 auto}
+.num-btn{padding:15px;font-size:20px;font-weight:500;border:1px solid #e8e8e8;border-radius:12px;background:#fff;cursor:pointer;transition:all 0.1s}
+.num-btn:active{background:#e8e8e8;transform:scale(0.95)}
+.info-bar{background:#e8eeff;border-radius:10px;padding:10px 14px;font-size:13px;color:#0a1172;display:flex;align-items:center;gap:8px;margin-bottom:1rem;font-weight:600}
+.chip-row{display:flex;gap:8px}
+.chip{flex:1;padding:10px 0;border:1.5px solid #e0e0e0;border-radius:12px;font-size:14px;cursor:pointer;background:#fff;text-align:center;transition:all 0.15s;color:#555}
+.chip:hover{border-color:#0a1172;color:#0a1172}
+.chip.active{background:#0a1172;color:#fff;border-color:#0a1172;font-weight:600}
+.field-err{font-size:12px;color:#c0392b;margin-top:6px;display:none}
+.lok-table{width:100%;border-collapse:collapse}
+.lok-table tr{border-bottom:1px solid #f0f0f0}
+.lok-table tr:last-child{border:none}
+.lok-table td{padding:10px 4px;vertical-align:middle}
+.lok-name{font-size:14px;color:#111;font-weight:500}
+.lok-qty{width:120px}
+.qty-wrap{display:flex;align-items:center;gap:6px}
+.qb{width:32px;height:32px;border:1px solid #e0e0e0;border-radius:8px;background:#f5f5f5;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:500}
+.qb:active{background:#e0e0e0}
+.qi{width:52px;text-align:center;font-size:15px;font-weight:600;border:1.5px solid #e0e0e0;border-radius:8px;padding:5px 4px;color:#111}
+select,input[type=date],input[type=month]{width:100%;font-size:15px;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;color:#111}
+.btn-primary{width:100%;padding:14px;font-size:15px;font-weight:700;background:#0a1172;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:8px;letter-spacing:0.5px;transition:all 0.15s}
+.btn-primary:active{background:#060b4e;transform:scale(0.98)}
+.btn-secondary{width:100%;padding:11px;font-size:14px;background:#f5f5f5;color:#333;border:1px solid #e0e0e0;border-radius:12px;cursor:pointer;margin-top:8px}
+.btn-confirm{width:100%;padding:14px;font-size:15px;font-weight:700;background:#1a7a3a;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:8px}
+.btn-confirm:active{background:#145e2c;transform:scale(0.98)}
+.btn-warn{width:100%;padding:14px;font-size:15px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:8px}
+.btn-warn:active{background:#922b21;transform:scale(0.98)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:999}
+@media(min-width:768px){.modal-overlay{align-items:center;padding:1rem}}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:520px}
+@media(min-width:768px){.modal-box{border-radius:16px}}
+.modal-title{font-size:16px;font-weight:700;color:#111;margin-bottom:4px}
+.modal-sub{font-size:13px;color:#888;margin-bottom:1.25rem}
+.warn-box{background:#fff5f5;border:1px solid #f5c6c6;border-radius:10px;padding:12px 14px;font-size:13px;color:#c0392b;margin-bottom:1rem;line-height:1.5}
+.sum-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:14px}
+.sum-row:last-child{border:none}
+.sum-label{color:#888;flex-shrink:0;margin-right:8px}
+.sum-val{font-weight:600;color:#111;text-align:right}
+.success-circle{width:72px;height:72px;border-radius:50%;background:#e8f5e9;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:38px}
+.admin-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.admin-tbl th{padding:8px 6px;text-align:center;color:#888;font-weight:600;border-bottom:2px solid #e8e8e8;white-space:nowrap}
+.admin-tbl th:first-child{text-align:left}
+.admin-tbl td{padding:8px 6px;text-align:center;border-bottom:1px solid #f0f0f0}
+.admin-tbl td:first-child{text-align:left;font-weight:500;color:#111;font-size:12px}
+.admin-tbl tfoot td{font-weight:700;border-top:2px solid #e8e8e8;border-bottom:none;background:#f9f9f9}
+.admin-tbl tfoot td:first-child{color:#0a1172}
+.num-cell{color:#0a1172;font-weight:600}
+.zero-cell{color:#ddd}
+.mitra-cell{color:#7b2d8b;font-weight:600}
+.filter-chip{padding:8px 14px;border:1.5px solid #e0e0e0;border-radius:20px;font-size:13px;cursor:pointer;background:#fff;color:#555;transition:all 0.15s}
+.filter-chip.active{background:#0a1172;color:#fff;border-color:#0a1172;font-weight:600}
+.loading-row{text-align:center;padding:1.5rem;color:#aaa;font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="dot-grid"></div>
+    <div class="header-inner">
+      <h1>KitchenLog</h1>
+      <p>Sari Murni Catering — Jakarta Utara</p>
+    </div>
+  </div>
+
+  <!-- ROLE -->
+  <div class="screen active" id="s-role">
+    <div style="padding:0.5rem 0">
+      <div class="card-title" style="padding:0 0.25rem;margin-bottom:12px">Masuk Sebagai</div>
+      <button class="role-btn" onclick="pickRole('produksi')">
+        <div class="role-icon">👨‍🍳</div>
+        <div><div class="role-name">Staf Produksi</div><div class="role-desc">Input data produksi harian</div></div>
+      </button>
+      <button class="role-btn" onclick="pickRole('mitra')">
+        <div class="role-icon">🤝</div>
+        <div><div class="role-name">Mitra</div><div class="role-desc">Input data produksi bulanan</div></div>
+      </button>
+      <button class="role-btn" onclick="pickRole('admin')">
+        <div class="role-icon">🛡️</div>
+        <div><div class="role-name">Admin</div><div class="role-desc">Lihat laporan bulanan</div></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- PILIH NAMA -->
+  <div class="screen" id="s-nama">
+    <div class="card">
+      <div class="card-title" id="nama-label">Pilih Nama</div>
+      <div id="nama-list"></div>
+    </div>
+  </div>
+
+  <!-- PIN -->
+  <div class="screen" id="s-pin">
+    <div class="card" style="text-align:center">
+      <div class="card-title" id="pin-label">Masukkan PIN</div>
+      <div class="pin-dots">
+        <div class="dot" id="d0"></div><div class="dot" id="d1"></div>
+        <div class="dot" id="d2"></div><div class="dot" id="d3"></div>
+      </div>
+      <div class="pin-error" id="pin-err"></div>
+      <div class="numpad">
+        <button class="num-btn" onclick="ap('1')">1</button>
+        <button class="num-btn" onclick="ap('2')">2</button>
+        <button class="num-btn" onclick="ap('3')">3</button>
+        <button class="num-btn" onclick="ap('4')">4</button>
+        <button class="num-btn" onclick="ap('5')">5</button>
+        <button class="num-btn" onclick="ap('6')">6</button>
+        <button class="num-btn" onclick="ap('7')">7</button>
+        <button class="num-btn" onclick="ap('8')">8</button>
+        <button class="num-btn" onclick="ap('9')">9</button>
+        <button class="num-btn"></button>
+        <button class="num-btn" onclick="ap('0')">0</button>
+        <button class="num-btn" onclick="dp()">⌫</button>
+      </div>
+      <button class="btn-secondary" onclick="go('s-nama')" style="margin-top:1rem;max-width:260px">← Kembali</button>
+    </div>
+  </div>
+
+  <!-- FORM PRODUKSI -->
+  <div class="screen" id="s-form">
+    <div class="info-bar">👨‍🍳 <span id="form-nama">Staf</span></div>
+    <div class="card">
+      <div class="card-title">Tanggal</div>
+      <input type="date" id="inp-date">
+      <div class="field-err" id="err-date">⚠️ Pilih tanggal terlebih dahulu.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Jadwal Makan</div>
+      <div class="chip-row">
+        <div class="chip" onclick="setW(this,'Pagi')">🌅 Pagi</div>
+        <div class="chip" onclick="setW(this,'Siang')">☀️ Siang</div>
+        <div class="chip" onclick="setW(this,'Malam')">🌙 Malam</div>
+      </div>
+      <div class="field-err" id="err-jadwal">⚠️ Pilih jadwal makan terlebih dahulu.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Jumlah Porsi per Lokasi</div>
+      <table class="lok-table" id="tbl-produksi"></table>
+      <div class="field-err" id="err-qty">⚠️ Isi minimal satu lokasi.</div>
+    </div>
+    <button class="btn-primary" onclick="showModal('produksi')">SIMPAN</button>
+    <button class="btn-secondary" onclick="logout()">Keluar</button>
+  </div>
+
+  <!-- FORM MITRA -->
+  <div class="screen" id="s-mitra">
+    <div class="info-bar">🤝 <span id="mitra-nama">Mitra</span></div>
+    <div class="card">
+      <div class="card-title">Periode (Bulan)</div>
+      <input type="month" id="inp-month">
+      <div class="field-err" id="err-month">⚠️ Pilih periode terlebih dahulu.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total Porsi per Lokasi</div>
+      <table class="lok-table" id="tbl-mitra"></table>
+      <div class="field-err" id="err-mitra-qty">⚠️ Isi minimal satu lokasi.</div>
+    </div>
+    <button class="btn-primary" onclick="showModal('mitra')">SIMPAN</button>
+    <button class="btn-secondary" onclick="logout()">Keluar</button>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="screen" id="s-admin">
+    <div class="info-bar">🛡️ Mode Admin</div>
+    <div class="card">
+      <div class="card-title">Pilih Periode</div>
+      <input type="month" id="admin-month" onchange="renderAdmin()">
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="filter-chip active" id="fc-bln" onclick="setAdminFilter('bulan')">Bulan Ini</button>
+        <button class="filter-chip" id="fc-prev" onclick="setAdminFilter('prev')">Bulan Lalu</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem">
+      <div style="background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:1rem;text-align:center">
+        <div style="font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Total Porsi</div>
+        <div style="font-size:22px;font-weight:800;color:#0a1172" id="adm-total">0</div>
+      </div>
+      <div style="background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:1rem;text-align:center">
+        <div style="font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Dapur</div>
+        <div style="font-size:22px;font-weight:800;color:#0a1172" id="adm-dapur">0</div>
+      </div>
+      <div style="background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:1rem;text-align:center">
+        <div style="font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Mitra</div>
+        <div style="font-size:22px;font-weight:800;color:#7b2d8b" id="adm-mitra">0</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Rekap Per Lokasi</div>
+      <div style="overflow-x:auto">
+        <table class="admin-tbl">
+          <thead>
+            <tr>
+              <th style="text-align:left">Lokasi</th>
+              <th>🌅 Pagi</th>
+              <th>☀️ Siang</th>
+              <th>🌙 Malam</th>
+              <th>Mitra</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="adm-tbody"><tr><td colspan="6" class="loading-row">Pilih periode untuk melihat data.</td></tr></tbody>
+          <tfoot>
+            <tr>
+              <td>TOTAL</td>
+              <td id="ft-pagi">0</td>
+              <td id="ft-siang">0</td>
+              <td id="ft-malam">0</td>
+              <td id="ft-mitra">0</td>
+              <td id="ft-total">0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="logout()">Keluar</button>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="screen" id="s-ok">
+    <div class="card" style="text-align:center;padding:2rem">
+      <div class="success-circle">✅</div>
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Data Berhasil Disimpan!</h2>
+      <p style="font-size:13px;color:#888;margin-bottom:1.5rem" id="ok-sub">Data produksi telah tercatat.</p>
+      <button class="btn-primary" onclick="inputLagi()">+ Input Data Lagi</button>
+      <button class="btn-secondary" onclick="logout()">Selesai / Keluar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">Konfirmasi Data</div>
+    <div class="modal-sub">Pastikan data berikut sudah benar.</div>
+    <div id="warn-dup" class="warn-box" style="display:none"></div>
+    <div id="modal-sum" style="max-height:40vh;overflow-y:auto;margin-bottom:0.5rem"></div>
+    <button class="btn-confirm" id="btn-konfirm" onclick="konfirmasi()" style="display:none">✅ &nbsp;KONFIRMASI & SIMPAN</button>
+    <button class="btn-warn" id="btn-ganti" onclick="konfirmasi()" style="display:none">🔄 &nbsp;GANTI DATA LAMA</button>
+    <button class="btn-secondary" onclick="document.getElementById('modal').style.display='none'">← Koreksi Data</button>
+  </div>
+</div>
+
+<script>
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3H96U0KcxW7auOFtFeDyTmNKQFE4a2WkmJjrp235WStbz_Flyl_5pboIsDnmwfvRvQg/exec';
+
+var USERS = {
+  produksi: [{nama:'Erik',pin:'1111'},{nama:'Dani',pin:'2222'},{nama:'Karel',pin:'3333'}],
+  mitra: [{nama:'Fajriah',pin:'8888'},{nama:'Adhimas',pin:'7777'}],
+  admin: [{nama:'Admin',pin:'9999'}]
+};
+
+var LOK_SENDIRI = ['Polres Jakarta Utara','Polsek Tanjung Priok','Polsek Cilincing','Polsek Koja','Polsek Kelapa Gading','Polsek Pademangan','Polres Pelabuhan Tanjung Priok','Polsek Kalibaru'];
+var LOK_MITRA = ['Polsek Penjaringan','Polsek Sunda Kelapa','Polsek Muara Baru'];
+var ALL_LOK = LOK_SENDIRI.concat(LOK_MITRA);
+
+var role='', namaUser='', pinTarget='', pin='', waktu='', activeModal='', pendingPayload=null;
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  document.getElementById(id).classList.add('active');
+}
+
+function pickRole(r){
+  role=r; pin=''; namaUser=''; pinTarget='';
+  var icon = r==='produksi'?'👨‍🍳':r==='mitra'?'🤝':'🛡️';
+  var label = r==='produksi'?'Staf Produksi':r==='mitra'?'Mitra':'Admin';
+  document.getElementById('nama-label').textContent = 'Pilih Nama — '+label;
+  document.getElementById('nama-list').innerHTML = USERS[r].map(function(u){
+    return '<button class="role-btn" onclick="pickNama(\''+u.nama+'\',\''+u.pin+'\')"><div class="role-icon">'+icon+'</div><div><div class="role-name">'+u.nama+'</div></div></button>';
+  }).join('');
+  go('s-nama');
+}
+
+function pickNama(nama, pinCode){
+  namaUser=nama; pinTarget=pinCode; pin='';
+  updDots();
+  document.getElementById('pin-label').textContent = 'PIN untuk '+nama;
+  document.getElementById('pin-err').textContent = '';
+  go('s-pin');
+}
+
+function updDots(){
+  for(var i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled', i<pin.length);
+}
+
+function ap(n){
+  if(pin.length>=4) return;
+  pin+=n; updDots();
+  if(pin.length===4) chkPin();
+}
+
+function dp(){ pin=pin.slice(0,-1); updDots(); document.getElementById('pin-err').textContent=''; }
+
+function chkPin(){
+  if(pin===pinTarget){
+    if(role==='admin'){
+      go('s-admin');
+      setTimeout(function(){setAdminFilter('bulan')}, 100);
+    } else if(role==='mitra'){
+      document.getElementById('mitra-nama').textContent = namaUser;
+      buildLokTable('tbl-mitra', LOK_MITRA);
+      go('s-mitra');
+    } else {
+      document.getElementById('form-nama').textContent = namaUser;
+      buildLokTable('tbl-produksi', LOK_SENDIRI);
+      go('s-form');
+    }
+  } else {
+    document.getElementById('pin-err').textContent = 'PIN salah. Coba lagi.';
+    pin=''; updDots();
+  }
+}
+
+function buildLokTable(tbId, loks){
+  document.getElementById(tbId).innerHTML = loks.map(function(l,i){
+    var id = tbId+'_q'+i;
+    return '<tr><td class="lok-name">'+l+'</td><td class="lok-qty"><div class="qty-wrap">'+
+      '<button class="qb" onclick="cq(\''+id+'\',-5)">−</button>'+
+      '<input class="qi" type="number" id="'+id+'" value="" min="0" max="999" placeholder="0">'+
+      '<button class="qb" onclick="cq(\''+id+'\',5)">+</button>'+
+      '</div></td></tr>';
+  }).join('');
+}
+
+function cq(id, n){
+  var el = document.getElementById(id);
+  el.value = Math.max(0, (parseInt(el.value)||0)+n);
+}
+
+function setW(el, w){
+  waktu=w;
+  document.querySelectorAll('#s-form .chip').forEach(function(c){c.classList.remove('active')});
+  el.classList.add('active');
+  document.getElementById('err-jadwal').style.display='none';
+}
+
+function getQtyMap(tbId, loks){
+  var m={};
+  loks.forEach(function(l,i){ m[l] = parseInt(document.getElementById(tbId+'_q'+i).value)||0; });
+  return m;
+}
+
+function showModal(type){
+  activeModal = type;
+  pendingPayload = null;
+  var ok = true;
+
+  if(type==='produksi'){
+    var dt = document.getElementById('inp-date');
+    if(!dt.value){ dt.style.borderColor='#c0392b'; document.getElementById('err-date').style.display='block'; ok=false; }
+    else{ dt.style.borderColor='#e0e0e0'; document.getElementById('err-date').style.display='none'; }
+    if(!waktu){ document.getElementById('err-jadwal').style.display='block'; ok=false; }
+    else{ document.getElementById('err-jadwal').style.display='none'; }
+    var qmap = getQtyMap('tbl-produksi', LOK_SENDIRI);
+    if(!LOK_SENDIRI.some(function(l){return qmap[l]>0})){ document.getElementById('err-qty').style.display='block'; ok=false; }
+    else{ document.getElementById('err-qty').style.display='none'; }
+    if(!ok) return;
+
+    pendingPayload = {type:'produksi', nama:namaUser, tanggal:dt.value, jadwal:waktu, qty:qmap};
+
+    // Tampilkan modal loading
+    openModalLoading();
+
+    // Cek duplikat ke Sheets
+    var url = SCRIPT_URL + '?action=cekProduksi&nama=' + encodeURIComponent(namaUser) + '&tanggal=' + encodeURIComponent(dt.value) + '&jadwal=' + encodeURIComponent(waktu);
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        var rows = [
+          {l:'Nama', v:namaUser},
+          {l:'Tanggal', v:new Date(dt.value+'T12:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})},
+          {l:'Jadwal', v:waktu}
+        ];
+        LOK_SENDIRI.forEach(function(l){ rows.push({l:l, v:(qmap[l]||0)+' porsi'}); });
+        renderModal(rows, res.duplikat===true, res.duplikat ? '⚠️ Data '+waktu+' tanggal '+dt.value+' untuk '+namaUser+' sudah diinput. Data lama akan diganti.' : '');
+      })
+      .catch(function(err){
+        console.error('Cek duplikat error:', err);
+        var rows = [{l:'Nama',v:namaUser},{l:'Tanggal',v:dt.value},{l:'Jadwal',v:waktu}];
+        LOK_SENDIRI.forEach(function(l){ rows.push({l:l, v:(qmap[l]||0)+' porsi'}); });
+        renderModal(rows, false, '');
+      });
+
+  } else {
+    var mn = document.getElementById('inp-month');
+    if(!mn.value){ mn.style.borderColor='#c0392b'; document.getElementById('err-month').style.display='block'; ok=false; }
+    else{ mn.style.borderColor='#e0e0e0'; document.getElementById('err-month').style.display='none'; }
+    var qm = getQtyMap('tbl-mitra', LOK_MITRA);
+    if(!LOK_MITRA.some(function(l){return qm[l]>0})){ document.getElementById('err-mitra-qty').style.display='block'; ok=false; }
+    else{ document.getElementById('err-mitra-qty').style.display='none'; }
+    if(!ok) return;
+
+    pendingPayload = {type:'mitra', nama:namaUser, bulan:mn.value, qty:qm};
+
+    openModalLoading();
+
+    var url = SCRIPT_URL + '?action=cekMitra&nama=' + encodeURIComponent(namaUser) + '&bulan=' + encodeURIComponent(mn.value);
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        var mDate = new Date(mn.value+'-01T12:00:00');
+        var mStr = mDate.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+        var mrows = [{l:'Nama',v:namaUser},{l:'Periode',v:mStr}];
+        LOK_MITRA.forEach(function(l){ mrows.push({l:l, v:(qm[l]||0)+' porsi'}); });
+        renderModal(mrows, res.duplikat===true, res.duplikat ? '⚠️ Data periode '+mStr+' untuk '+namaUser+' sudah diinput. Data lama akan diganti.' : '');
+      })
+      .catch(function(err){
+        console.error('Cek mitra error:', err);
+        var mDate = new Date(mn.value+'-01T12:00:00');
+        var mStr = mDate.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+        var mrows = [{l:'Nama',v:namaUser},{l:'Periode',v:mStr}];
+        LOK_MITRA.forEach(function(l){ mrows.push({l:l, v:(qm[l]||0)+' porsi'}); });
+        renderModal(mrows, false, '');
+      });
+  }
+}
+
+function openModalLoading(){
+  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('warn-dup').style.display = 'none';
+  document.getElementById('btn-konfirm').style.display = 'none';
+  document.getElementById('btn-ganti').style.display = 'none';
+  document.getElementById('modal-sum').innerHTML = '<p style="text-align:center;padding:1.5rem;color:#888;font-size:14px">⏳ Mengecek data...</p>';
+}
+
+function renderModal(rows, isDup, warnMsg){
+  document.getElementById('modal-sum').innerHTML = rows.map(function(r){
+    return '<div class="sum-row"><span class="sum-label">'+r.l+'</span><span class="sum-val">'+r.v+'</span></div>';
+  }).join('');
+  var warnEl = document.getElementById('warn-dup');
+  if(isDup){
+    warnEl.textContent = warnMsg;
+    warnEl.style.display = 'block';
+    document.getElementById('btn-konfirm').style.display = 'none';
+    document.getElementById('btn-ganti').style.display = 'block';
+  } else {
+    warnEl.style.display = 'none';
+    document.getElementById('btn-konfirm').style.display = 'block';
+    document.getElementById('btn-ganti').style.display = 'none';
+  }
+}
+
+function konfirmasi(){
+  document.getElementById('modal').style.display = 'none';
+  if(!pendingPayload) return;
+  document.getElementById('ok-sub').textContent = 'Menyimpan data...';
+  go('s-ok');
+  fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify(pendingPayload)})
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      document.getElementById('ok-sub').textContent = res.status==='replaced' ? 'Data lama berhasil diganti!' : 'Data berhasil tercatat.';
+    })
+    .catch(function(){
+      document.getElementById('ok-sub').textContent = 'Gagal sync ke Sheets — cek koneksi internet.';
+    });
+}
+
+function inputLagi(){
+  waktu=''; pendingPayload=null;
+  if(activeModal==='mitra'){
+    document.getElementById('inp-month').value='';
+    buildLokTable('tbl-mitra', LOK_MITRA);
+    go('s-mitra');
+  } else {
+    document.getElementById('inp-date').value='';
+    document.querySelectorAll('#s-form .chip').forEach(function(c){c.classList.remove('active')});
+    buildLokTable('tbl-produksi', LOK_SENDIRI);
+    go('s-form');
+  }
+}
+
+function logout(){ role=''; namaUser=''; pin=''; pinTarget=''; waktu=''; pendingPayload=null; go('s-role'); }
+
+function pad(n){ return n<10?'0'+n:''+n; }
+
+function setAdminFilter(mode){
+  document.querySelectorAll('.filter-chip').forEach(function(c){c.classList.remove('active')});
+  var now = new Date();
+  if(mode==='bulan'){
+    document.getElementById('fc-bln').classList.add('active');
+    document.getElementById('admin-month').value = now.getFullYear()+'-'+pad(now.getMonth()+1);
+  } else {
+    document.getElementById('fc-prev').classList.add('active');
+    var prev = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    document.getElementById('admin-month').value = prev.getFullYear()+'-'+pad(prev.getMonth()+1);
+  }
+  renderAdmin();
+}
+
+function renderAdmin(){
+  var bulan = document.getElementById('admin-month').value;
+  if(!bulan) return;
+  document.getElementById('adm-tbody').innerHTML = '<tr><td colspan="6" class="loading-row">⏳ Memuat data...</td></tr>';
+
+  fetch(SCRIPT_URL+'?action=getAdmin&bulan='+encodeURIComponent(bulan))
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var lokMap = {};
+      ALL_LOK.forEach(function(l){ lokMap[l] = {pagi:0,siang:0,malam:0,mitra:0}; });
+      (res.produksi||[]).forEach(function(r){
+        var j = r.jadwal.toLowerCase();
+        LOK_SENDIRI.forEach(function(l){ if(r.qty[l]) lokMap[l][j] += Number(r.qty[l]); });
+      });
+      (res.mitra||[]).forEach(function(r){
+        LOK_MITRA.forEach(function(l){ if(r.qty[l]) lokMap[l].mitra += Number(r.qty[l]); });
+      });
+      var tp=0,ts=0,tm=0,tmi=0;
+      var rows = ALL_LOK.map(function(l){
+        var d = lokMap[l];
+        var tot = d.pagi+d.siang+d.malam+d.mitra;
+        tp+=d.pagi; ts+=d.siang; tm+=d.malam; tmi+=d.mitra;
+        var isMitra = LOK_MITRA.indexOf(l)>=0;
+        return '<tr>'+
+          '<td>'+l+(isMitra?' <span style="font-size:10px;color:#7b2d8b;font-weight:600">MITRA</span>':'')+'</td>'+
+          (isMitra ?
+            '<td class="zero-cell">—</td><td class="zero-cell">—</td><td class="zero-cell">—</td><td class="'+(d.mitra>0?'mitra-cell':'zero-cell')+'">'+d.mitra+'</td>' :
+            '<td class="'+(d.pagi>0?'num-cell':'zero-cell')+'">'+d.pagi+'</td>'+
+            '<td class="'+(d.siang>0?'num-cell':'zero-cell')+'">'+d.siang+'</td>'+
+            '<td class="'+(d.malam>0?'num-cell':'zero-cell')+'">'+d.malam+'</td>'+
+            '<td class="zero-cell">—</td>')+
+          '<td style="font-weight:700;color:'+(tot>0?'#0a1172':'#ccc')+'">'+tot+'</td></tr>';
+      });
+      document.getElementById('adm-tbody').innerHTML = rows.join('');
+      document.getElementById('ft-pagi').textContent=tp;
+      document.getElementById('ft-siang').textContent=ts;
+      document.getElementById('ft-malam').textContent=tm;
+      document.getElementById('ft-mitra').textContent=tmi;
+      document.getElementById('ft-total').textContent=tp+ts+tm+tmi;
+      document.getElementById('adm-total').textContent=tp+ts+tm+tmi;
+      document.getElementById('adm-dapur').textContent=tp+ts+tm;
+      document.getElementById('adm-mitra').textContent=tmi;
+    })
+    .catch(function(){
+      document.getElementById('adm-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#c0392b">Gagal memuat data. Cek koneksi internet.</td></tr>';
+    });
+}
+</script>
+</body>
+</html>
