@@ -3,8 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0a1172">
 <title>KitchenLog — SM Catering</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -86,11 +84,6 @@ select,input[type=date],input[type=month]{width:100%;font-size:15px;padding:10px
 .loading-row{text-align:center;padding:1.5rem;color:#aaa;font-size:13px}
 </style>
 </head>
-<script>
-if('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/kitchenlog/sw.js');
-}
-</script>
 <body>
 <div class="app">
   <div class="header">
@@ -260,6 +253,8 @@ if('serviceWorker' in navigator) {
       <div class="success-circle">✅</div>
       <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Data Berhasil Disimpan!</h2>
       <p style="font-size:13px;color:#888;margin-bottom:1.5rem" id="ok-sub">Data produksi telah tercatat.</p>
+      <button class="btn-primary" id="btn-copy-wa" onclick="copyWA()" style="background:#25D366;margin-bottom:4px">📋 Copy Ringkasan ke WA</button>
+      <p id="copy-notice" style="font-size:12px;color:#25D366;min-height:18px;margin-bottom:8px"></p>
       <button class="btn-primary" onclick="inputLagi()">+ Input Data Lagi</button>
       <button class="btn-secondary" onclick="logout()">Selesai / Keluar</button>
     </div>
@@ -281,6 +276,7 @@ if('serviceWorker' in navigator) {
 
 <script>
 var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3H96U0KcxW7auOFtFeDyTmNKQFE4a2WkmJjrp235WStbz_Flyl_5pboIsDnmwfvRvQg/exec';
+var lastPayload = null;
 
 var USERS = {
   produksi: [{nama:'Erik',pin:'1111'},{nama:'Dani',pin:'2222'},{nama:'Karel',pin:'3333'}],
