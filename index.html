@@ -451,19 +451,18 @@ function buatTeksWA(){
 function copyWA(){
   var teks=buatTeksWA();
   if(!teks){alert('Tidak ada data untuk di-share.');return;}
-  // Coba Web Share API dulu (native share sheet HP)
-  if(navigator.share){
+  // Web Share API hanya untuk mobile
+  if(navigator.share && /Mobi|Android/i.test(navigator.userAgent)){
     navigator.share({text:teks}).catch(function(){tampilModalWA(teks);});
     return;
   }
-  // Coba clipboard API
+  // Desktop & fallback: clipboard API
   if(navigator.clipboard&&navigator.clipboard.writeText){
     navigator.clipboard.writeText(teks).then(function(){
       document.getElementById('copy-notice').textContent='✅ Ter-copy! Silakan paste ke WA.';
     }).catch(function(){tampilModalWA(teks);});
     return;
   }
-  // Fallback: tampilkan modal
   tampilModalWA(teks);
 }
 
