@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a1172">
+<link rel="manifest" href="manifest.json">
 <title>KitchenLog — SM Catering</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -56,7 +58,7 @@ select,input[type=date],input[type=month]{width:100%;font-size:15px;padding:10px
 .btn-confirm{width:100%;padding:14px;font-size:15px;font-weight:700;background:#1a7a3a;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:8px}
 .btn-confirm:active{background:#145e2c;transform:scale(0.98)}
 .btn-warn{width:100%;padding:14px;font-size:15px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:8px}
-.btn-warn:active{background:#922b21;transform:scale(0.98)}
+.btn-wa{width:100%;padding:14px;font-size:15px;font-weight:700;background:#25D366;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:8px}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;justify-content:center;z-index:999}
 @media(min-width:768px){.modal-overlay{align-items:center;padding:1rem}}
 .modal-box{background:#fff;border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:520px}
@@ -81,7 +83,6 @@ select,input[type=date],input[type=month]{width:100%;font-size:15px;padding:10px
 .mitra-cell{color:#7b2d8b;font-weight:600}
 .filter-chip{padding:8px 14px;border:1.5px solid #e0e0e0;border-radius:20px;font-size:13px;cursor:pointer;background:#fff;color:#555;transition:all 0.15s}
 .filter-chip.active{background:#0a1172;color:#fff;border-color:#0a1172;font-weight:600}
-.loading-row{text-align:center;padding:1.5rem;color:#aaa;font-size:13px}
 </style>
 </head>
 <body>
@@ -230,7 +231,7 @@ select,input[type=date],input[type=month]{width:100%;font-size:15px;padding:10px
               <th>Total</th>
             </tr>
           </thead>
-          <tbody id="adm-tbody"><tr><td colspan="6" class="loading-row">Pilih periode untuk melihat data.</td></tr></tbody>
+          <tbody id="adm-tbody"><tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#aaa">Pilih periode untuk melihat data.</td></tr></tbody>
           <tfoot>
             <tr>
               <td>TOTAL</td>
@@ -252,16 +253,16 @@ select,input[type=date],input[type=month]{width:100%;font-size:15px;padding:10px
     <div class="card" style="text-align:center;padding:2rem">
       <div class="success-circle">✅</div>
       <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Data Berhasil Disimpan!</h2>
-      <p style="font-size:13px;color:#888;margin-bottom:1.5rem" id="ok-sub">Data produksi telah tercatat.</p>
-      <button class="btn-primary" id="btn-copy-wa" onclick="copyWA()" style="background:#25D366;margin-bottom:4px">📋 Copy Ringkasan ke WA</button>
-      <p id="copy-notice" style="font-size:12px;color:#25D366;min-height:18px;margin-bottom:8px"></p>
+      <p style="font-size:13px;color:#888;margin-bottom:1rem" id="ok-sub">Data produksi telah tercatat.</p>
+      <button class="btn-wa" onclick="copyWA()">📋 Copy Ringkasan ke WA</button>
+      <p id="copy-notice" style="font-size:12px;color:#25D366;min-height:18px;margin:6px 0"></p>
       <button class="btn-primary" onclick="inputLagi()">+ Input Data Lagi</button>
       <button class="btn-secondary" onclick="logout()">Selesai / Keluar</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL -->
+<!-- MODAL KONFIRMASI -->
 <div class="modal-overlay" id="modal" style="display:none">
   <div class="modal-box">
     <div class="modal-title">Konfirmasi Data</div>
@@ -274,82 +275,59 @@ select,input[type=date],input[type=month]{width:100%;font-size:15px;padding:10px
   </div>
 </div>
 
+<!-- MODAL WA -->
+<div class="modal-overlay" id="wa-modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">📋 Ringkasan untuk WA</div>
+    <div class="modal-sub">Tekan tombol di bawah atau long press teks → Salin Semua → paste ke WA.</div>
+    <textarea id="wa-teks" readonly style="width:100%;height:200px;font-size:13px;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;resize:none;background:#f9f9f9;color:#111;line-height:1.6;margin-bottom:8px"></textarea>
+    <button class="btn-confirm" onclick="cobaCopy()">📋 Copy Teks</button>
+    <button class="btn-secondary" onclick="document.getElementById('wa-modal').style.display='none'">Tutup</button>
+  </div>
+</div>
+
 <script>
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3H96U0KcxW7auOFtFeDyTmNKQFE4a2WkmJjrp235WStbz_Flyl_5pboIsDnmwfvRvQg/exec';
-var lastPayload = null;
-
-var USERS = {
-  produksi: [{nama:'Erik',pin:'1111'},{nama:'Dani',pin:'2222'},{nama:'Karel',pin:'3333'}],
-  mitra: [{nama:'Fajriah',pin:'8888'},{nama:'Adhimas',pin:'7777'}],
-  admin: [{nama:'Admin',pin:'9999'}]
+var SCRIPT_URL='https://script.google.com/macros/s/AKfycbz3H96U0KcxW7auOFtFeDyTmNKQFE4a2WkmJjrp235WStbz_Flyl_5pboIsDnmwfvRvQg/exec';
+var USERS={
+  produksi:[{nama:'Erik',pin:'1111'},{nama:'Dani',pin:'2222'},{nama:'Karel',pin:'3333'}],
+  mitra:[{nama:'Fajriah',pin:'8888'},{nama:'Adhimas',pin:'7777'}],
+  admin:[{nama:'Admin',pin:'9999'}]
 };
+var LOK_SENDIRI=['Polres Jakarta Utara','Polsek Tanjung Priok','Polsek Cilincing','Polsek Koja','Polsek Kelapa Gading','Polsek Pademangan','Polres Pelabuhan Tanjung Priok','Polsek Kalibaru'];
+var LOK_MITRA=['Polsek Penjaringan','Polsek Sunda Kelapa','Polsek Muara Baru'];
+var ALL_LOK=LOK_SENDIRI.concat(LOK_MITRA);
+var role='',namaUser='',pinTarget='',pin='',waktu='',activeModal='',pendingPayload=null,lastPayload=null;
 
-var LOK_SENDIRI = ['Polres Jakarta Utara','Polsek Tanjung Priok','Polsek Cilincing','Polsek Koja','Polsek Kelapa Gading','Polsek Pademangan','Polres Pelabuhan Tanjung Priok','Polsek Kalibaru'];
-var LOK_MITRA = ['Polsek Penjaringan','Polsek Sunda Kelapa','Polsek Muara Baru'];
-var ALL_LOK = LOK_SENDIRI.concat(LOK_MITRA);
-
-var role='', namaUser='', pinTarget='', pin='', waktu='', activeModal='', pendingPayload=null;
-
-function go(id){
-  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
-  document.getElementById(id).classList.add('active');
-}
+function go(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById(id).classList.add('active')}
 
 function pickRole(r){
-  role=r; pin=''; namaUser=''; pinTarget='';
-  var icon = r==='produksi'?'👨‍🍳':r==='mitra'?'🤝':'🛡️';
-  var label = r==='produksi'?'Staf Produksi':r==='mitra'?'Mitra':'Admin';
-  document.getElementById('nama-label').textContent = 'Pilih Nama — '+label;
-  document.getElementById('nama-list').innerHTML = USERS[r].map(function(u){
-    return '<button class="role-btn" onclick="pickNama(\''+u.nama+'\',\''+u.pin+'\')"><div class="role-icon">'+icon+'</div><div><div class="role-name">'+u.nama+'</div></div></button>';
+  role=r;pin='';namaUser='';pinTarget='';
+  var icon=r==='produksi'?'👨‍🍳':r==='mitra'?'🤝':'🛡️';
+  var label=r==='produksi'?'Staf Produksi':r==='mitra'?'Mitra':'Admin';
+  document.getElementById('nama-label').textContent='Pilih Nama — '+label;
+  document.getElementById('nama-list').innerHTML=USERS[r].map(function(u){
+    return'<button class="role-btn" onclick="pickNama(\''+u.nama+'\',\''+u.pin+'\')"><div class="role-icon">'+icon+'</div><div><div class="role-name">'+u.nama+'</div></div></button>';
   }).join('');
   go('s-nama');
 }
 
-function pickNama(nama, pinCode){
-  namaUser=nama; pinTarget=pinCode; pin='';
-  updDots();
-  document.getElementById('pin-label').textContent = 'PIN untuk '+nama;
-  document.getElementById('pin-err').textContent = '';
-  go('s-pin');
-}
-
-function updDots(){
-  for(var i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled', i<pin.length);
-}
-
-function ap(n){
-  if(pin.length>=4) return;
-  pin+=n; updDots();
-  if(pin.length===4) chkPin();
-}
-
-function dp(){ pin=pin.slice(0,-1); updDots(); document.getElementById('pin-err').textContent=''; }
+function pickNama(nama,pinCode){namaUser=nama;pinTarget=pinCode;pin='';updDots();document.getElementById('pin-label').textContent='PIN untuk '+nama;document.getElementById('pin-err').textContent='';go('s-pin')}
+function updDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('filled',i<pin.length)}
+function ap(n){if(pin.length>=4)return;pin+=n;updDots();if(pin.length===4)chkPin()}
+function dp(){pin=pin.slice(0,-1);updDots();document.getElementById('pin-err').textContent=''}
 
 function chkPin(){
   if(pin===pinTarget){
-    if(role==='admin'){
-      go('s-admin');
-      setTimeout(function(){setAdminFilter('bulan')}, 100);
-    } else if(role==='mitra'){
-      document.getElementById('mitra-nama').textContent = namaUser;
-      buildLokTable('tbl-mitra', LOK_MITRA);
-      go('s-mitra');
-    } else {
-      document.getElementById('form-nama').textContent = namaUser;
-      buildLokTable('tbl-produksi', LOK_SENDIRI);
-      go('s-form');
-    }
-  } else {
-    document.getElementById('pin-err').textContent = 'PIN salah. Coba lagi.';
-    pin=''; updDots();
-  }
+    if(role==='admin'){go('s-admin');setTimeout(function(){setAdminFilter('bulan')},100);}
+    else if(role==='mitra'){document.getElementById('mitra-nama').textContent=namaUser;buildLokTable('tbl-mitra',LOK_MITRA);go('s-mitra');}
+    else{document.getElementById('form-nama').textContent=namaUser;buildLokTable('tbl-produksi',LOK_SENDIRI);go('s-form');}
+  } else {document.getElementById('pin-err').textContent='PIN salah. Coba lagi.';pin='';updDots()}
 }
 
-function buildLokTable(tbId, loks){
-  document.getElementById(tbId).innerHTML = loks.map(function(l,i){
-    var id = tbId+'_q'+i;
-    return '<tr><td class="lok-name">'+l+'</td><td class="lok-qty"><div class="qty-wrap">'+
+function buildLokTable(tbId,loks){
+  document.getElementById(tbId).innerHTML=loks.map(function(l,i){
+    var id=tbId+'_q'+i;
+    return'<tr><td class="lok-name">'+l+'</td><td class="lok-qty"><div class="qty-wrap">'+
       '<button class="qb" onclick="cq(\''+id+'\',-5)">−</button>'+
       '<input class="qi" type="number" id="'+id+'" value="" min="0" max="999" placeholder="0">'+
       '<button class="qb" onclick="cq(\''+id+'\',5)">+</button>'+
@@ -357,239 +335,212 @@ function buildLokTable(tbId, loks){
   }).join('');
 }
 
-function cq(id, n){
-  var el = document.getElementById(id);
-  el.value = Math.max(0, (parseInt(el.value)||0)+n);
-}
-
-function setW(el, w){
-  waktu=w;
-  document.querySelectorAll('#s-form .chip').forEach(function(c){c.classList.remove('active')});
-  el.classList.add('active');
-  document.getElementById('err-jadwal').style.display='none';
-}
-
-function getQtyMap(tbId, loks){
-  var m={};
-  loks.forEach(function(l,i){ m[l] = parseInt(document.getElementById(tbId+'_q'+i).value)||0; });
-  return m;
-}
+function cq(id,n){var el=document.getElementById(id);el.value=Math.max(0,(parseInt(el.value)||0)+n)}
+function setW(el,w){waktu=w;document.querySelectorAll('#s-form .chip').forEach(function(c){c.classList.remove('active')});el.classList.add('active');document.getElementById('err-jadwal').style.display='none'}
+function getQtyMap(tbId,loks){var m={};loks.forEach(function(l,i){m[l]=parseInt(document.getElementById(tbId+'_q'+i).value)||0});return m}
 
 function showModal(type){
-  activeModal = type;
-  pendingPayload = null;
-  var ok = true;
-
+  activeModal=type;pendingPayload=null;
+  var ok=true;
   if(type==='produksi'){
-    var dt = document.getElementById('inp-date');
-    if(!dt.value){ dt.style.borderColor='#c0392b'; document.getElementById('err-date').style.display='block'; ok=false; }
-    else{ dt.style.borderColor='#e0e0e0'; document.getElementById('err-date').style.display='none'; }
-    if(!waktu){ document.getElementById('err-jadwal').style.display='block'; ok=false; }
-    else{ document.getElementById('err-jadwal').style.display='none'; }
-    var qmap = getQtyMap('tbl-produksi', LOK_SENDIRI);
-    if(!LOK_SENDIRI.some(function(l){return qmap[l]>0})){ document.getElementById('err-qty').style.display='block'; ok=false; }
-    else{ document.getElementById('err-qty').style.display='none'; }
-    if(!ok) return;
-
-    pendingPayload = {type:'produksi', nama:namaUser, tanggal:dt.value, jadwal:waktu, qty:qmap};
-
-    // Tampilkan modal loading
+    var dt=document.getElementById('inp-date');
+    if(!dt.value){dt.style.borderColor='#c0392b';document.getElementById('err-date').style.display='block';ok=false}
+    else{dt.style.borderColor='#e0e0e0';document.getElementById('err-date').style.display='none'}
+    if(!waktu){document.getElementById('err-jadwal').style.display='block';ok=false}
+    else{document.getElementById('err-jadwal').style.display='none'}
+    var qmap=getQtyMap('tbl-produksi',LOK_SENDIRI);
+    if(!LOK_SENDIRI.some(function(l){return qmap[l]>0})){document.getElementById('err-qty').style.display='block';ok=false}
+    else{document.getElementById('err-qty').style.display='none'}
+    if(!ok)return;
+    pendingPayload={type:'produksi',nama:namaUser,tanggal:dt.value,jadwal:waktu,qty:qmap};
     openModalLoading();
-
-    // Cek duplikat ke Sheets
-    var url = SCRIPT_URL + '?action=cekProduksi&nama=' + encodeURIComponent(namaUser) + '&tanggal=' + encodeURIComponent(dt.value) + '&jadwal=' + encodeURIComponent(waktu);
-    fetch(url)
-      .then(function(r){ return r.json(); })
-      .then(function(res){
-        var rows = [
-          {l:'Nama', v:namaUser},
-          {l:'Tanggal', v:new Date(dt.value+'T12:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})},
-          {l:'Jadwal', v:waktu}
-        ];
-        LOK_SENDIRI.forEach(function(l){ rows.push({l:l, v:(qmap[l]||0)+' porsi'}); });
-        renderModal(rows, res.duplikat===true, res.duplikat ? '⚠️ Data '+waktu+' tanggal '+dt.value+' untuk '+namaUser+' sudah diinput. Data lama akan diganti.' : '');
-      })
-      .catch(function(err){
-        console.error('Cek duplikat error:', err);
-        var rows = [{l:'Nama',v:namaUser},{l:'Tanggal',v:dt.value},{l:'Jadwal',v:waktu}];
-        LOK_SENDIRI.forEach(function(l){ rows.push({l:l, v:(qmap[l]||0)+' porsi'}); });
-        renderModal(rows, false, '');
-      });
-
+    var url=SCRIPT_URL+'?action=cekProduksi&nama='+encodeURIComponent(namaUser)+'&tanggal='+encodeURIComponent(dt.value)+'&jadwal='+encodeURIComponent(waktu);
+    fetch(url).then(function(r){return r.json()}).then(function(res){
+      var rows=[{l:'Nama',v:namaUser},{l:'Tanggal',v:new Date(dt.value+'T12:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})},{l:'Jadwal',v:waktu}];
+      LOK_SENDIRI.forEach(function(l){rows.push({l:l,v:(qmap[l]||0)+' porsi'})});
+      renderModal(rows,res.duplikat===true,res.duplikat?'⚠️ Data '+waktu+' tanggal '+dt.value+' untuk '+namaUser+' sudah diinput. Data lama akan diganti.':'');
+    }).catch(function(){
+      var rows=[{l:'Nama',v:namaUser},{l:'Tanggal',v:dt.value},{l:'Jadwal',v:waktu}];
+      LOK_SENDIRI.forEach(function(l){rows.push({l:l,v:(qmap[l]||0)+' porsi'})});
+      renderModal(rows,false,'');
+    });
   } else {
-    var mn = document.getElementById('inp-month');
-    if(!mn.value){ mn.style.borderColor='#c0392b'; document.getElementById('err-month').style.display='block'; ok=false; }
-    else{ mn.style.borderColor='#e0e0e0'; document.getElementById('err-month').style.display='none'; }
-    var qm = getQtyMap('tbl-mitra', LOK_MITRA);
-    if(!LOK_MITRA.some(function(l){return qm[l]>0})){ document.getElementById('err-mitra-qty').style.display='block'; ok=false; }
-    else{ document.getElementById('err-mitra-qty').style.display='none'; }
-    if(!ok) return;
-
-    pendingPayload = {type:'mitra', nama:namaUser, bulan:mn.value, qty:qm};
-
+    var mn=document.getElementById('inp-month');
+    if(!mn.value){mn.style.borderColor='#c0392b';document.getElementById('err-month').style.display='block';ok=false}
+    else{mn.style.borderColor='#e0e0e0';document.getElementById('err-month').style.display='none'}
+    var qm=getQtyMap('tbl-mitra',LOK_MITRA);
+    if(!LOK_MITRA.some(function(l){return qm[l]>0})){document.getElementById('err-mitra-qty').style.display='block';ok=false}
+    else{document.getElementById('err-mitra-qty').style.display='none'}
+    if(!ok)return;
+    pendingPayload={type:'mitra',nama:namaUser,bulan:mn.value,qty:qm};
     openModalLoading();
-
-    var url = SCRIPT_URL + '?action=cekMitra&nama=' + encodeURIComponent(namaUser) + '&bulan=' + encodeURIComponent(mn.value);
-    fetch(url)
-      .then(function(r){ return r.json(); })
-      .then(function(res){
-        var mDate = new Date(mn.value+'-01T12:00:00');
-        var mStr = mDate.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-        var mrows = [{l:'Nama',v:namaUser},{l:'Periode',v:mStr}];
-        LOK_MITRA.forEach(function(l){ mrows.push({l:l, v:(qm[l]||0)+' porsi'}); });
-        renderModal(mrows, res.duplikat===true, res.duplikat ? '⚠️ Data periode '+mStr+' untuk '+namaUser+' sudah diinput. Data lama akan diganti.' : '');
-      })
-      .catch(function(err){
-        console.error('Cek mitra error:', err);
-        var mDate = new Date(mn.value+'-01T12:00:00');
-        var mStr = mDate.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-        var mrows = [{l:'Nama',v:namaUser},{l:'Periode',v:mStr}];
-        LOK_MITRA.forEach(function(l){ mrows.push({l:l, v:(qm[l]||0)+' porsi'}); });
-        renderModal(mrows, false, '');
-      });
+    var url=SCRIPT_URL+'?action=cekMitra&nama='+encodeURIComponent(namaUser)+'&bulan='+encodeURIComponent(mn.value);
+    fetch(url).then(function(r){return r.json()}).then(function(res){
+      var mDate=new Date(mn.value+'-01T12:00:00');
+      var mStr=mDate.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+      var mrows=[{l:'Nama',v:namaUser},{l:'Periode',v:mStr}];
+      LOK_MITRA.forEach(function(l){mrows.push({l:l,v:(qm[l]||0)+' porsi'})});
+      renderModal(mrows,res.duplikat===true,res.duplikat?'⚠️ Data periode '+mStr+' untuk '+namaUser+' sudah diinput. Data lama akan diganti.':'');
+    }).catch(function(){
+      var mDate=new Date(mn.value+'-01T12:00:00');
+      var mStr=mDate.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+      var mrows=[{l:'Nama',v:namaUser},{l:'Periode',v:mStr}];
+      LOK_MITRA.forEach(function(l){mrows.push({l:l,v:(qm[l]||0)+' porsi'})});
+      renderModal(mrows,false,'');
+    });
   }
 }
 
 function openModalLoading(){
-  document.getElementById('modal').style.display = 'flex';
-  document.getElementById('warn-dup').style.display = 'none';
-  document.getElementById('btn-konfirm').style.display = 'none';
-  document.getElementById('btn-ganti').style.display = 'none';
-  document.getElementById('modal-sum').innerHTML = '<p style="text-align:center;padding:1.5rem;color:#888;font-size:14px">⏳ Mengecek data...</p>';
+  document.getElementById('modal').style.display='flex';
+  document.getElementById('warn-dup').style.display='none';
+  document.getElementById('btn-konfirm').style.display='none';
+  document.getElementById('btn-ganti').style.display='none';
+  document.getElementById('modal-sum').innerHTML='<p style="text-align:center;padding:1.5rem;color:#888;font-size:14px">⏳ Mengecek data...</p>';
 }
 
-function renderModal(rows, isDup, warnMsg){
-  document.getElementById('modal-sum').innerHTML = rows.map(function(r){
-    return '<div class="sum-row"><span class="sum-label">'+r.l+'</span><span class="sum-val">'+r.v+'</span></div>';
-  }).join('');
-  var warnEl = document.getElementById('warn-dup');
-  if(isDup){
-    warnEl.textContent = warnMsg;
-    warnEl.style.display = 'block';
-    document.getElementById('btn-konfirm').style.display = 'none';
-    document.getElementById('btn-ganti').style.display = 'block';
-  } else {
-    warnEl.style.display = 'none';
-    document.getElementById('btn-konfirm').style.display = 'block';
-    document.getElementById('btn-ganti').style.display = 'none';
-  }
+function renderModal(rows,isDup,warnMsg){
+  document.getElementById('modal-sum').innerHTML=rows.map(function(r){return'<div class="sum-row"><span class="sum-label">'+r.l+'</span><span class="sum-val">'+r.v+'</span></div>'}).join('');
+  if(isDup){document.getElementById('warn-dup').textContent=warnMsg;document.getElementById('warn-dup').style.display='block';document.getElementById('btn-konfirm').style.display='none';document.getElementById('btn-ganti').style.display='block';}
+  else{document.getElementById('warn-dup').style.display='none';document.getElementById('btn-konfirm').style.display='block';document.getElementById('btn-ganti').style.display='none';}
 }
 
 function konfirmasi(){
-  document.getElementById('modal').style.display = 'none';
-  if(!pendingPayload) return;
-  document.getElementById('ok-sub').textContent = 'Menyimpan data...';
+  document.getElementById('modal').style.display='none';
+  if(!pendingPayload)return;
+  lastPayload=pendingPayload;
+  document.getElementById('ok-sub').textContent='Menyimpan data...';
+  document.getElementById('copy-notice').textContent='';
   go('s-ok');
-  fetch(SCRIPT_URL, {method:'POST', body:JSON.stringify(pendingPayload)})
-    .then(function(r){ return r.json(); })
-    .then(function(res){
-      document.getElementById('ok-sub').textContent = res.status==='replaced' ? 'Data lama berhasil diganti!' : 'Data berhasil tercatat.';
-    })
-    .catch(function(){
-      document.getElementById('ok-sub').textContent = 'Gagal sync ke Sheets — cek koneksi internet.';
-    });
+  fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(pendingPayload)})
+    .then(function(r){return r.json()})
+    .then(function(res){document.getElementById('ok-sub').textContent=res.status==='replaced'?'Data lama berhasil diganti!':'Data berhasil tercatat.';})
+    .catch(function(){document.getElementById('ok-sub').textContent='Gagal sync ke Sheets — cek koneksi internet.';});
+}
+
+function buatTeksWA(){
+  if(!lastPayload)return'';
+  var now=new Date();
+  var jam=now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  var teks='';
+  if(lastPayload.type==='produksi'){
+    var tgl=new Date(lastPayload.tanggal+'T12:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    teks+='✅ KitchenLog - Data Produksi\n';
+    teks+='📅 '+tgl+'\n';
+    teks+='🕐 Jadwal: '+lastPayload.jadwal+'\n';
+    teks+='👤 Staf: '+lastPayload.nama+'\n\n';
+    teks+='📍 Rincian Porsi:\n';
+    var total=0;
+    LOK_SENDIRI.forEach(function(l){var qty=lastPayload.qty[l]||0;if(qty>0){teks+='• '+l+': '+qty+' porsi\n';total+=qty;}});
+    teks+='\n📦 Total: '+total+' porsi\n';
+    teks+='⏰ Input pukul: '+jam+' WIB';
+  } else {
+    var bln=new Date(lastPayload.bulan+'-01T12:00:00').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+    teks+='✅ KitchenLog - Data Mitra\n';
+    teks+='📅 Periode: '+bln+'\n';
+    teks+='👤 Mitra: '+lastPayload.nama+'\n\n';
+    teks+='📍 Rincian Porsi:\n';
+    var total=0;
+    LOK_MITRA.forEach(function(l){var qty=lastPayload.qty[l]||0;if(qty>0){teks+='• '+l+': '+qty+' porsi\n';total+=qty;}});
+    teks+='\n📦 Total: '+total+' porsi\n';
+    teks+='⏰ Input pukul: '+jam+' WIB';
+  }
+  return teks;
+}
+
+function copyWA(){
+  var teks=buatTeksWA();
+  if(!teks){alert('Tidak ada data untuk di-share.');return;}
+  // Coba Web Share API dulu (native share sheet HP)
+  if(navigator.share){
+    navigator.share({text:teks}).catch(function(){tampilModalWA(teks);});
+    return;
+  }
+  // Coba clipboard API
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(teks).then(function(){
+      document.getElementById('copy-notice').textContent='✅ Ter-copy! Silakan paste ke WA.';
+    }).catch(function(){tampilModalWA(teks);});
+    return;
+  }
+  // Fallback: tampilkan modal
+  tampilModalWA(teks);
+}
+
+function tampilModalWA(teks){
+  document.getElementById('wa-teks').value=teks;
+  document.getElementById('wa-modal').style.display='flex';
+  setTimeout(function(){document.getElementById('wa-teks').focus();document.getElementById('wa-teks').select();},100);
+}
+
+function cobaCopy(){
+  var el=document.getElementById('wa-teks');
+  el.select();
+  try{
+    var ok=document.execCommand('copy');
+    if(ok){
+      document.getElementById('copy-notice').textContent='✅ Ter-copy! Silakan paste ke WA.';
+      document.getElementById('wa-modal').style.display='none';
+    } else {
+      document.getElementById('copy-notice').textContent='Gagal — long press teks lalu pilih Salin Semua.';
+    }
+  }catch(e){
+    document.getElementById('copy-notice').textContent='Gagal — long press teks lalu pilih Salin Semua.';
+  }
 }
 
 function inputLagi(){
-  waktu=''; pendingPayload=null;
-  if(activeModal==='mitra'){
-    document.getElementById('inp-month').value='';
-    buildLokTable('tbl-mitra', LOK_MITRA);
-    go('s-mitra');
-  } else {
-    document.getElementById('inp-date').value='';
-    document.querySelectorAll('#s-form .chip').forEach(function(c){c.classList.remove('active')});
-    buildLokTable('tbl-produksi', LOK_SENDIRI);
-    go('s-form');
-  }
+  waktu='';pendingPayload=null;
+  if(activeModal==='mitra'){document.getElementById('inp-month').value='';buildLokTable('tbl-mitra',LOK_MITRA);go('s-mitra');}
+  else{document.getElementById('inp-date').value='';document.querySelectorAll('#s-form .chip').forEach(function(c){c.classList.remove('active')});buildLokTable('tbl-produksi',LOK_SENDIRI);go('s-form');}
 }
 
-function logout(){ role=''; namaUser=''; pin=''; pinTarget=''; waktu=''; pendingPayload=null; go('s-role'); }
+function logout(){role='';namaUser='';pin='';pinTarget='';waktu='';pendingPayload=null;lastPayload=null;go('s-role')}
 
-function pad(n){ return n<10?'0'+n:''+n; }
+function pad(n){return n<10?'0'+n:''+n}
 
 function setAdminFilter(mode){
   document.querySelectorAll('.filter-chip').forEach(function(c){c.classList.remove('active')});
-  var now = new Date();
-  if(mode==='bulan'){
-    document.getElementById('fc-bln').classList.add('active');
-    document.getElementById('admin-month').value = now.getFullYear()+'-'+pad(now.getMonth()+1);
-  } else {
-    document.getElementById('fc-prev').classList.add('active');
-    var prev = new Date(now.getFullYear(), now.getMonth()-1, 1);
-    document.getElementById('admin-month').value = prev.getFullYear()+'-'+pad(prev.getMonth()+1);
-  }
+  var now=new Date();
+  if(mode==='bulan'){document.getElementById('fc-bln').classList.add('active');document.getElementById('admin-month').value=now.getFullYear()+'-'+pad(now.getMonth()+1);}
+  else{document.getElementById('fc-prev').classList.add('active');var prev=new Date(now.getFullYear(),now.getMonth()-1,1);document.getElementById('admin-month').value=prev.getFullYear()+'-'+pad(prev.getMonth()+1);}
   renderAdmin();
 }
 
 function renderAdmin(){
-  var bulan = document.getElementById('admin-month').value;
-  if(!bulan) return;
-  document.getElementById('adm-tbody').innerHTML = '<tr><td colspan="6" class="loading-row">⏳ Memuat data...</td></tr>';
-
+  var bulan=document.getElementById('admin-month').value;
+  if(!bulan)return;
+  document.getElementById('adm-tbody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#aaa">⏳ Memuat data...</td></tr>';
   fetch(SCRIPT_URL+'?action=getAdmin&bulan='+encodeURIComponent(bulan))
-    .then(function(r){ return r.json(); })
+    .then(function(r){return r.json()})
     .then(function(res){
-      var lokMap = {};
-      ALL_LOK.forEach(function(l){ lokMap[l] = {pagi:0,siang:0,malam:0,mitra:0}; });
-      (res.produksi||[]).forEach(function(r){
-        var j = r.jadwal.toLowerCase();
-        LOK_SENDIRI.forEach(function(l){ if(r.qty[l]) lokMap[l][j] += Number(r.qty[l]); });
-      });
-      (res.mitra||[]).forEach(function(r){
-        LOK_MITRA.forEach(function(l){ if(r.qty[l]) lokMap[l].mitra += Number(r.qty[l]); });
-      });
+      var lokMap={};
+      ALL_LOK.forEach(function(l){lokMap[l]={pagi:0,siang:0,malam:0,mitra:0}});
+      (res.produksi||[]).forEach(function(r){var j=r.jadwal.toLowerCase();LOK_SENDIRI.forEach(function(l){if(r.qty[l])lokMap[l][j]+=Number(r.qty[l])})});
+      (res.mitra||[]).forEach(function(r){LOK_MITRA.forEach(function(l){if(r.qty[l])lokMap[l].mitra+=Number(r.qty[l])})});
       var tp=0,ts=0,tm=0,tmi=0;
-      var rows = ALL_LOK.map(function(l){
-        var d = lokMap[l];
-        var tot = d.pagi+d.siang+d.malam+d.mitra;
-        tp+=d.pagi; ts+=d.siang; tm+=d.malam; tmi+=d.mitra;
-        var isMitra = LOK_MITRA.indexOf(l)>=0;
-        return '<tr>'+
-          '<td>'+l+(isMitra?' <span style="font-size:10px;color:#7b2d8b;font-weight:600">MITRA</span>':'')+'</td>'+
-          (isMitra ?
-            '<td class="zero-cell">—</td><td class="zero-cell">—</td><td class="zero-cell">—</td><td class="'+(d.mitra>0?'mitra-cell':'zero-cell')+'">'+d.mitra+'</td>' :
-            '<td class="'+(d.pagi>0?'num-cell':'zero-cell')+'">'+d.pagi+'</td>'+
-            '<td class="'+(d.siang>0?'num-cell':'zero-cell')+'">'+d.siang+'</td>'+
-            '<td class="'+(d.malam>0?'num-cell':'zero-cell')+'">'+d.malam+'</td>'+
-            '<td class="zero-cell">—</td>')+
+      var rows=ALL_LOK.map(function(l){
+        var d=lokMap[l];var tot=d.pagi+d.siang+d.malam+d.mitra;
+        tp+=d.pagi;ts+=d.siang;tm+=d.malam;tmi+=d.mitra;
+        var isMitra=LOK_MITRA.indexOf(l)>=0;
+        return'<tr><td>'+l+(isMitra?' <span style="font-size:10px;color:#7b2d8b;font-weight:600">MITRA</span>':'')+'</td>'+
+          (isMitra?'<td class="zero-cell">—</td><td class="zero-cell">—</td><td class="zero-cell">—</td><td class="'+(d.mitra>0?'mitra-cell':'zero-cell')+'">'+d.mitra+'</td>':
+          '<td class="'+(d.pagi>0?'num-cell':'zero-cell')+'">'+d.pagi+'</td><td class="'+(d.siang>0?'num-cell':'zero-cell')+'">'+d.siang+'</td><td class="'+(d.malam>0?'num-cell':'zero-cell')+'">'+d.malam+'</td><td class="zero-cell">—</td>')+
           '<td style="font-weight:700;color:'+(tot>0?'#0a1172':'#ccc')+'">'+tot+'</td></tr>';
       });
-      document.getElementById('adm-tbody').innerHTML = rows.join('');
-      document.getElementById('ft-pagi').textContent=tp;
-      document.getElementById('ft-siang').textContent=ts;
-      document.getElementById('ft-malam').textContent=tm;
-      document.getElementById('ft-mitra').textContent=tmi;
+      document.getElementById('adm-tbody').innerHTML=rows.join('');
+      document.getElementById('ft-pagi').textContent=tp;document.getElementById('ft-siang').textContent=ts;
+      document.getElementById('ft-malam').textContent=tm;document.getElementById('ft-mitra').textContent=tmi;
       document.getElementById('ft-total').textContent=tp+ts+tm+tmi;
       document.getElementById('adm-total').textContent=tp+ts+tm+tmi;
       document.getElementById('adm-dapur').textContent=tp+ts+tm;
       document.getElementById('adm-mitra').textContent=tmi;
-    })
-    .catch(function(){
-      document.getElementById('adm-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#c0392b">Gagal memuat data. Cek koneksi internet.</td></tr>';
-    });
+    }).catch(function(){document.getElementById('adm-tbody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:#c0392b">Gagal memuat data.</td></tr>';});
+}
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/kitchenlog/sw.js');
 }
 </script>
-<!-- WA MODAL -->
-<div class="modal-overlay" id="wa-modal" style="display:none">
-  <div class="modal-box">
-    <div class="modal-title">📋 Ringkasan untuk WA</div>
-    <div class="modal-sub">Tekan & tahan teks di bawah → pilih "Salin Semua" → paste ke WA.</div>
-    <textarea id="wa-teks" readonly style="width:100%;height:200px;font-size:13px;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;resize:none;background:#f9f9f9;color:#111;line-height:1.6"></textarea>
-    <button class="btn-confirm" onclick="coba_copy()">📋 Coba Copy Otomatis</button>
-    <button class="btn-secondary" onclick="document.getElementById('wa-modal').style.display='none'">Tutup</button>
-  </div>
-</div>
-
-<script>
-function coba_copy(){
-  var el=document.getElementById('wa-teks');
-  el.select();
-  document.execCommand('copy');
-  document.getElementById('copy-notice').textContent='✅ Ter-copy! Silakan paste ke WA.';
-  document.getElementById('wa-modal').style.display='none';
-}
-</script>
-
 </body>
 </html>
