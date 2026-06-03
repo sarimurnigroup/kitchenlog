@@ -570,5 +570,26 @@ function renderAdmin(){
     });
 }
 </script>
+<!-- WA MODAL -->
+<div class="modal-overlay" id="wa-modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">📋 Ringkasan untuk WA</div>
+    <div class="modal-sub">Tekan & tahan teks di bawah → pilih "Salin Semua" → paste ke WA.</div>
+    <textarea id="wa-teks" readonly style="width:100%;height:200px;font-size:13px;padding:10px;border:1.5px solid #e0e0e0;border-radius:10px;resize:none;background:#f9f9f9;color:#111;line-height:1.6"></textarea>
+    <button class="btn-confirm" onclick="coba_copy()">📋 Coba Copy Otomatis</button>
+    <button class="btn-secondary" onclick="document.getElementById('wa-modal').style.display='none'">Tutup</button>
+  </div>
+</div>
+
+<script>
+function coba_copy(){
+  var el=document.getElementById('wa-teks');
+  el.select();
+  document.execCommand('copy');
+  document.getElementById('copy-notice').textContent='✅ Ter-copy! Silakan paste ke WA.';
+  document.getElementById('wa-modal').style.display='none';
+}
+</script>
+
 </body>
 </html>
